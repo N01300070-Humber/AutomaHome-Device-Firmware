@@ -1,3 +1,13 @@
+/*
+ * Author: Calvin Abel
+ * 
+ * Target Device: Bi-Directional Movement Sensor
+ * Target Baord: STM32
+ * 
+ * Description:
+ * Simple code to test the functionality of infrared LEDs and receivers on the movement sensor
+ */
+
 #define LED1 PC13
 #define LED2 PA4
 #define IRE1 PB0 //Timer chanel: T3C3

@@ -1,3 +1,15 @@
+/*
+ * Author: Calvin Abel
+ * 
+ * Target Device: Any
+ * Target Baord: STM32
+ * 
+ * Description:
+ * Simple testing code for communication between the STM32 and ESP8266.
+ * Sends what is typed in the Serial Monitor to the ESP8266 and shows the response.
+ * Good for testing commands or configuring the ESP8266 manualy.
+ */
+
 // Serial2 uses pin A2 and A3
 //  TX - PA3
 //  RX - PA2
@@ -21,6 +33,7 @@ void loop() {
   }
 }
 
+// Sends the command to the ESP8266, waits for the response, then returns the reply from the ESP8266
 String sendCommand(String command) {
   String reply = "";
   

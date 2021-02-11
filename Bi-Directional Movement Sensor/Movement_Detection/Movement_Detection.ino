@@ -1,3 +1,13 @@
+/*
+ * Author: Calvin Abel
+ * 
+ * Target Device: Bi-Directional Movement Sensor
+ * Target Baord: STM32
+ * 
+ * Description:
+ * Detects movement and lights up the LED on the side where the movement was detected to be going.
+ */
+
 #define LED1 PC13
 #define LED2 PA4
 #define IRE1 PB0 //Timer chanel: T3C3 (Timer 3, Chanel 3)
