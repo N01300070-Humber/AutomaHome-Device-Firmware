@@ -52,19 +52,26 @@ void loop() {
 }
 
 String sendCommand(String command) {
-  String reply = "";
+  String message = "";
+  String fullReply = "";
   
   Serial2.print(command);
   Serial2.print("\r\n");
 
-  while(Serial2.available() == 0) { // Wait for reply
-    delay(1);
+  while(true) {
+    while(Serial2.available() == 0) { // Wait for reply
+      delay(1);
+    }
+    while(Serial2.available() > 0) { // Read reply
+      message += (char) Serial2.read();
+    }
+    fullReply += message;
+    Serial.print(message);
+    if (message == "OK" || message == "ERROR") {
+      break;
+    }
   }
-  while(Serial2.available() > 0) { // Read reply
-    reply += (char) Serial2.read();
-  }
-
-  Serial.print(reply);
+  
   Serial.print("\n\n");
-  return reply;
+  return fullReply;
 }
