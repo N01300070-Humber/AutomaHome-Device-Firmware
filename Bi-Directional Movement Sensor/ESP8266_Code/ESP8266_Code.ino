@@ -10,6 +10,10 @@
 #include "firebaseCredentials.h" //Contains FIREBASE_HOST, FIREBASE_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
 // firebaseCredentials.h temporarily contains WIFI_SSID and WIFI_PASSWORD
 
+
+void updateRTDB(void);
+
+
 // Firebase Objects
 FirebaseData fbData;
 FirebaseAuth fbAuth;
@@ -20,6 +24,7 @@ String fbPath;
 const String PATH_START = "/devices/";
 const String PATH_END = "/data";
 const String PATH_TEST = "/test";
+const String PATH_TIMESTAMP = "/timestamp";
 
 // Loop Variables
 unsigned long fbNextLoop = 0;
@@ -30,15 +35,17 @@ int dataTest = 0;
 
 void setup() {
     Serial.begin(115200);
+    delay(1000);
     
     // Connect to Wi-Fi
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    
-    Serial.print("Connecting to Wi-Fi...\n");
+    // Display connection status
+    Serial.print("\nConnecting to Wi-Fi");
     while (WiFi.status() != WL_CONNECTED) {
         delay(250); //Wait until connection successful
+        Serial.print(".");
     }
-    Serial.print("Successfully connected to Wi-FI\n\n");
+    Serial.print("\nSuccessfully connected to Wi-FI\n\n");
     
     // Set Firebase credentials
     fbConfig.host = FIREBASE_HOST;
@@ -76,12 +83,22 @@ void loop() {
 }
 
 void updateRTDB(void) {
-    String pathTest = fbPath + PATH_TEST;
+    String path;
     
     dataTest++;
-    if (Firebase.RTDB.set(&fbData, pathTest.c_str(), dataTest)) {
-        Serial.printf("Successfully updated %s to %d\n\n", pathTest.c_str(), dataTest);
+    path = fbPath + PATH_TEST;
+    if (Firebase.RTDB.set(&fbData, path.c_str(), dataTest)) {
+        Serial.printf("Successfully updated %s to %d\n", path.c_str(), dataTest);
     } else {
-        Serial.printf("Failed to update %s: %s\n\n", pathTest.c_str(), fbData.errorReason().c_str());
+        Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
     }
+
+    path = fbPath + PATH_TIMESTAMP;
+    if (Firebase.RTDB.setTimestamp(&fbData, path.c_str())) {
+        Serial.printf("Successfully updated %s to current time\n", path.c_str());
+    } else {
+        Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+    }
+
+    Serial.print("\n");
 }
