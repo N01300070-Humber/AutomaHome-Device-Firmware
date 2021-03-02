@@ -1,3 +1,9 @@
+/*
+ * Author: Jay Patel
+ * 
+ * Target Device: Thermostat (HVAC Interface)
+ * Target Baord: ESP8266
+ */
 
 const boolean IS_COMMON_ANODE = false; 
 
