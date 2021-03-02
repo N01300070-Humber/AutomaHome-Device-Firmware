@@ -12,12 +12,14 @@
 
 
 void updateRTDB(void);
+String readInput(void);
 
 
 // Firebase Objects
 FirebaseData fbData;
 FirebaseAuth fbAuth;
 FirebaseConfig fbConfig;
+struct token_info_t tokenInfo;
 
 // Firebase Path
 String fbPath;
@@ -26,12 +28,13 @@ const String PATH_END = "/data";
 const String PATH_TEST = "/test";
 const String PATH_TIMESTAMP = "/timestamp";
 
-// Loop Variables
+// Timing Variables
 unsigned long fbNextLoop = 0;
 #define FIREBASE_LOOP_INTERVAL 5000
+#define READ_TIMEOUT 250
 
 // Firebase Realtime Database Data
-int dataTest = 0;
+String dataTest = "";
 
 void setup() {
     Serial.begin(115200);
@@ -65,30 +68,56 @@ void setup() {
     Firebase.begin(&fbConfig, &fbAuth);
 
     fbPath = PATH_START + fbAuth.token.uid.c_str() + PATH_END;
+
+    // Wait until connection token is ready
+    /*Serial.print("Waiting for token to be ready");
+    while (true) {
+        tokenInfo = Firebase.authTokenInfo();
+
+        if (tokenInfo.status == token_status_error) {
+            Serial.printf("\n  %s (%d)", tokenInfo.error.message.c_str(), tokenInfo.error.code);
+        } else {
+            break;
+        }
+        
+        delay(5000);
+    }
+    Serial.print("\nToken is ready\n\n");*/
 }
 
 void loop() {
+    if (Serial.available() > 0) {
+        // Check staus of token used for connection
+        tokenInfo = Firebase.authTokenInfo();
+        if (tokenInfo.status == token_status_error) {
+            Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
+        } else {
+            dataTest = readInput();
+            updateRTDB();
+        }
+    }
+    
     if (millis() >= fbNextLoop) {
         fbNextLoop = millis() + FIREBASE_LOOP_INTERVAL;
 
         // Check staus of token used for connection
-        struct token_info_t tokenInfo = Firebase.authTokenInfo();
+        tokenInfo = Firebase.authTokenInfo();
         if (tokenInfo.status == token_status_error) {
-            Serial.printf("Token Error: %s\n\n", tokenInfo.error.message.c_str());
+            Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
         }
-        else {
+        /*else {
+            dataTest++;
             updateRTDB();
-        }
+        }*/
     }
 }
 
 void updateRTDB(void) {
     String path;
     
-    dataTest++;
     path = fbPath + PATH_TEST;
-    if (Firebase.RTDB.set(&fbData, path.c_str(), dataTest)) {
-        Serial.printf("Successfully updated %s to %d\n", path.c_str(), dataTest);
+    if (Firebase.RTDB.set(&fbData, path.c_str(), dataTest.c_str())) {
+        Serial.printf("Successfully updated %s to %s\n", path.c_str(), dataTest.c_str());
     } else {
         Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
     }
@@ -101,4 +130,38 @@ void updateRTDB(void) {
     }
 
     Serial.print("\n");
+}
+
+String readInput(void) {
+    unsigned long millisReadTimeout = millis() + READ_TIMEOUT;
+    char prevChar = 0;
+    char currChar = 0;
+    String message = "";
+
+    Serial.print("\nRecieved Message:\n");
+    while (millis() < millisReadTimeout) {
+        if (Serial.available() > 0) {
+            currChar = Serial.read();
+            
+//            Serial.printf("%c(%d), ", currChar, currChar);
+            if (!(currChar == '\n' || currChar == '\r')) {
+                Serial.print(currChar);
+                message += currChar;
+                millisReadTimeout = millis() + READ_TIMEOUT;
+            }
+            
+            if (currChar == '\n' && prevChar == '\r' || currChar == '\r' && prevChar == '\n') {
+                Serial.print("\nEnd of message: newline and return character terminated\n");
+                return message;
+            }
+            
+            prevChar = currChar;
+        }
+        else {
+            yield();
+        }
+    }
+
+    Serial.print("\nEnd of message: timed out waiting for new character\n");
+    return message;
 }
