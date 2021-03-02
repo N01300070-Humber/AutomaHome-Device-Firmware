@@ -2,94 +2,77 @@
  * Author: Jay Patel
  * 
  * Target Device: Thermostat (HVAC Interface)
- * Target Baord: ESP8266
+ * Target Board: ESP8266
  */
 
-const boolean IS_COMMON_ANODE = false; 
+#include <ESP8266WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include "firebaseCredentials.h" //Contains FIREBASE_HOST, FIREBASE_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
+// firebaseCredentials.h temporarily contains WIFI_SSID and WIFI_PASSWORD
 
-//PB13 = Red LED (Compressor)
-//PB14 = Yellow LED (Reverse Value)
-//PB15 = Green LED (Cooling Fan)
+// Firebase Objects
+FirebaseData fbData;
+FirebaseAuth fbAuth;
+FirebaseConfig fbConfig;
+struct token_info_t tokenInfo;
+
+// Firebase Path
+String fbPath;
+const String PATH_START = "/devices/";
+const String PATH_END = "/data";
+
+
+
 
 void setup() 
 {
-  // Set the RGB pins to output
-  pinMode(PB13, OUTPUT);
-  pinMode(PB14, OUTPUT);
-  pinMode(PB15, OUTPUT);
-
-  // Turn on Serial so we can verify expected colors via Serial Monitor
-  Serial.begin(9600); 
-}
-
-void loop() {
-
-  if (Serial.available() > 0) 
-  {
-      char state = Serial.read();
-      
-      if (state == 'H' || state == 'h')
-      {
-         Serial.print("LED IS ON ");
-         HVAC_State(HIGH, HIGH, HIGH);
-         delay(1000);
-      }
-      
-      if (state == 'R' || state == 'r')
-      {
-      // red
-        Serial.print("Red: ");
-        HVAC_State(HIGH, LOW, LOW);
-        delay(1000);
-      }
-
-      if (state == 'Y' || state == 'y')
-      {
-       // yellow
-        Serial.print("Yellow: ");
-        HVAC_State(LOW, HIGH, LOW);
-        delay(1000);
-      }
-
-      
-      if (state == 'G' || state == 'g')
-      {
-        // green
-        Serial.print("Green: ");
-         HVAC_State(LOW, LOW, HIGH);
-        delay(1000);
-      }
+   // Turn on Serial so we can verify expected colors via Serial Monitor
+   Serial.begin(115200);
+    delay(1000);
     
-      if (state == 'L' || state == 'l')
-      {
-         Serial.print("LED IS OFF ");
-         HVAC_State(LOW, LOW, LOW);
-      }
+    // Connect to Wi-Fi
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    // Display connection status
+    Serial.print("\nConnecting to Wi-Fi");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(250); //Wait until connection successful
+        Serial.print(".");
     }
+    Serial.print("\nSuccessfully connected to Wi-FI\n\n");
+    
+    // Set Firebase credentials
+    fbConfig.host = FIREBASE_HOST;
+    fbConfig.api_key = FIREBASE_API_KEY;
+
+    fbConfig.service_account.data.client_email = FIREBASE_CLIENT_EMAIL;
+    fbConfig.service_account.data.project_id = FIREBASE_PROJECT_ID;
+    fbConfig.service_account.data.private_key = FIREBASE_PRIVATE_KEY;
+
+    fbAuth.token.uid = "Thermostat01"; //Manually assigned for now
+
+    fbAuth.token.claims.add("device", true);
+
+    // Setup Firebase connection
+    Firebase.reconnectWiFi(true);
+    fbData.setResponseSize(4096);
+    Firebase.begin(&fbConfig, &fbAuth);
+
+    fbPath = PATH_START + fbAuth.token.uid.c_str() + PATH_END;
 }
 
 
-/**
- * The serial reads Red('R', 'r'), Yellow('Y', 'y'), Green('G', 'g') and on/off switches which are High('H' 'h') and Low('L', 'l').
- * This function is based on https://gist.github.com/jamesotron/766994
- */
-void  HVAC_State(int red, int green, int yellow)
+void loop() 
 {
-  // If a common anode LED, invert values
-  if(IS_COMMON_ANODE == true)
+  //Verify that you are connected to the Firebase
+  tokenInfo = Firebase.authTokenInfo();
+  if (tokenInfo.status == token_status_error) 
   {
-    red = !red;
-    green = !green;
-    yellow = !yellow;
+    Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
   }
+  else
+  {
+    Serial.printf("No Token Error");
+  }
+  delay(5000);
 
-  Serial.print(red);
-  Serial.print(", ");
-  Serial.print(green);
-  Serial.print(", ");
-  Serial.println(yellow);
-  
-  digitalWrite(PB13, red);
-  digitalWrite(PB14, yellow);
-  digitalWrite(PB15, green);  
 }
