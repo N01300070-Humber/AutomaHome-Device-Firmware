@@ -1,8 +1,8 @@
 const boolean IS_COMMON_ANODE = false; 
 
-const int RGB_RED_PIN = 5;
-const int RGB_GREEN_PIN = 4;
-const int RGB_BLUE_PIN = 6;
+#define RGB_RED_PIN = PA10;
+#define RGB_GREEN_PIN = PA9;
+#define RGB_BLUE_PIN = PA8;
 const int DELAY_MS = 1000; // delay in ms between changing colors
 
 void setup() {
@@ -12,7 +12,8 @@ void setup() {
   pinMode(RGB_BLUE_PIN, OUTPUT);
 
   // Turn on Serial so we can verify expected colors via Serial Monitor
-  Serial.begin(9600); 
+  Serial.begin(9600);
+  Serial2.begin(115200);
 }
 
 void loop() {
@@ -25,6 +26,7 @@ void loop() {
       {
          Serial.print("LED IS ON ");
          setRgbLedColor(HIGH, HIGH, HIGH);
+         Serial2.print ("RGB ON"); //send result to ESP8266
          delay(1000);
       }
 
@@ -33,6 +35,7 @@ void loop() {
       {
       Serial.print("Red: ");
       setRgbLedColor(HIGH, LOW, LOW);
+      Serial2.print ("Red ON"); //send result to ESP8266
       delay(DELAY_MS);  
       }
   
@@ -41,6 +44,7 @@ void loop() {
       {
       Serial.print("Green: ");
       setRgbLedColor(LOW, HIGH, LOW);
+      Serial2.print ("Green ON"); //send result to ESP8266
       delay(DELAY_MS);  
       }
   
@@ -49,40 +53,20 @@ void loop() {
       {
       Serial.print("Blue: ");
       setRgbLedColor(LOW, LOW, HIGH);
+      Serial2.print ("Blue ON"); //send result to ESP8266
       delay(DELAY_MS); 
       }     
-      
-      // purple
-      if (state == 'P' || state == 'p')
-      {
-      Serial.print("Purple: ");
-      setRgbLedColor(HIGH, LOW, HIGH);
-      delay(DELAY_MS);
-      }
-      
-      // turqoise
-      if (state == 'T' || state == 't')
-      {
-      Serial.print("Turqoise: ");
-      setRgbLedColor(LOW, HIGH, HIGH);
-      delay(DELAY_MS);
-      }
-      
-      // yellow
-      if (state == 'Y' || state == 'y')
-      {
-      Serial.print("Yellow: ");
-      setRgbLedColor(HIGH, HIGH, LOW);
-      delay(DELAY_MS); 
-      }   
-      
+              
       if (state == 'L' || state == 'l')
       {
          Serial.print("LED IS OFF ");
          setRgbLedColor(LOW, LOW, LOW);
+         Serial2.print ("RGB OFF"); //send result to ESP8266
       }
-      }
-  
+     }
+    if (Serial2.available()>0){
+    Serial.print((char) Serial2.read()); //Forward all received messages from ESP8266 to main serial
+      }  
 }
 
 /**
