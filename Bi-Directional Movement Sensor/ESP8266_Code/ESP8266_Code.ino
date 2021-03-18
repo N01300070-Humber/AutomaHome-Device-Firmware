@@ -24,7 +24,7 @@ struct token_info_t tokenInfo;
 // Firebase Path
 String fbPath;
 const String PATH_START = "/devices/";
-const String PATH_END = "/data";
+const String PATH_END = "/data/log";
 const String KEY_DIRECTION = "direction";
 const String PATH_TIMESTAMP = "/timestamp";
 
