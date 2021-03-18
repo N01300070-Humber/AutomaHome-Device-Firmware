@@ -2,7 +2,7 @@
  * Author: Calvin Abel
  * 
  * Target Device: Bi-Directional Movement Sensor
- * Target Baord: ESP8266
+ * Target Board: ESP8266
  */
  
 #include <ESP8266WiFi.h>
@@ -25,7 +25,7 @@ struct token_info_t tokenInfo;
 String fbPath;
 const String PATH_START = "/devices/";
 const String PATH_END = "/data";
-const String PATH_TEST = "/test";
+const String KEY_DIRECTION = "direction";
 const String PATH_TIMESTAMP = "/timestamp";
 
 // Timing Variables
@@ -34,7 +34,7 @@ unsigned long fbNextLoop = 0;
 #define READ_TIMEOUT 250
 
 // Firebase Realtime Database Data
-String dataTest = "";
+String dataDirection = "";
 
 void setup() {
     Serial.begin(115200);
@@ -68,21 +68,6 @@ void setup() {
     Firebase.begin(&fbConfig, &fbAuth);
 
     fbPath = PATH_START + fbAuth.token.uid.c_str() + PATH_END;
-
-    // Wait until connection token is ready
-    /*Serial.print("Waiting for token to be ready");
-    while (true) {
-        tokenInfo = Firebase.authTokenInfo();
-
-        if (tokenInfo.status == token_status_error) {
-            Serial.printf("\n  %s (%d)", tokenInfo.error.message.c_str(), tokenInfo.error.code);
-        } else {
-            break;
-        }
-        
-        delay(5000);
-    }
-    Serial.print("\nToken is ready\n\n");*/
 }
 
 void loop() {
@@ -92,7 +77,7 @@ void loop() {
         if (tokenInfo.status == token_status_error) {
             Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
         } else {
-            dataTest = readInput();
+            dataDirection = readInput();
             updateRTDB();
         }
     }
@@ -105,30 +90,31 @@ void loop() {
         if (tokenInfo.status == token_status_error) {
             Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
         }
-        /*else {
-            dataTest++;
-            updateRTDB();
-        }*/
     }
 }
 
 void updateRTDB(void) {
     String path;
+    FirebaseJson json;
+
+    // Fill out JSON object
+    json.set(KEY_DIRECTION, dataDirection);
+
+    // Add JSON object to database as new entry
+    if (Firebase.RTDB.pushJSON(&fbData, fbPath.c_str(), &json)) {
+        Serial.printf("Successfully created new entry\n");
+
+        // Add current server timestamp to new entry
+        path = fbData.dataPath() + "/" + fbData.pushName() + PATH_TIMESTAMP;
+        if (Firebase.RTDB.setTimestamp(&fbData, path.c_str())) {
+            Serial.printf("Successfully set timestamp\n");
+        } else {
+            Serial.printf("Failed to set timestamp: %s\n", fbData.errorReason().c_str());
+        }
+    } else {
+        Serial.printf("Failed to create new entry: %s\n", fbData.errorReason().c_str());
+    }
     
-    path = fbPath + PATH_TEST;
-    if (Firebase.RTDB.set(&fbData, path.c_str(), dataTest.c_str())) {
-        Serial.printf("Successfully updated %s to %s\n", path.c_str(), dataTest.c_str());
-    } else {
-        Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-    }
-
-    path = fbPath + PATH_TIMESTAMP;
-    if (Firebase.RTDB.setTimestamp(&fbData, path.c_str())) {
-        Serial.printf("Successfully updated %s to current time\n", path.c_str());
-    } else {
-        Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-    }
-
     Serial.print("\n");
 }
 
@@ -143,7 +129,6 @@ String readInput(void) {
         if (Serial.available() > 0) {
             currChar = Serial.read();
             
-//            Serial.printf("%c(%d), ", currChar, currChar);
             if (!(currChar == '\n' || currChar == '\r')) {
                 Serial.print(currChar);
                 message += currChar;

@@ -67,55 +67,51 @@ void loop()
   tokenInfo = Firebase.authTokenInfo();
   if (tokenInfo.status == token_status_error) 
   {
-    Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
+     Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
   }
   else
   {
-    Serial.printf("No Token Error\n\n");
-  }
-  delay(5000);
-
-
-  String path;
-  bool compressor;
-  bool reverse;
-  bool fan;
+    String path;
+    bool compressor;
+    bool reverse;
+    bool fan;
+    
+    path = fbPath + "/compressor";
+    if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
+    {
+      Serial.printf("Successfully read %s\n", path.c_str());
+      compressor = fbData.boolData();
+    } 
+    else 
+    {
+      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+    }
+   
   
-  path = fbPath + "/compressor";
-  if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
-  {
-    Serial.printf("Successfully read %s\n", path.c_str());
-    compressor = fbData.boolData();
-  } 
-  else 
-  {
-    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-  }
-
-
-
-  path = fbPath + "/reverse";
-  if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
-  {
-    Serial.printf("Successfully read %s\n", path.c_str());
-    reverse = fbData.boolData();
-  } 
-  else 
-  {
-    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-  }
-
-
-
-  path = fbPath + "/fan";
-  if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
-  {
-    Serial.printf("Successfully read %s\n", path.c_str());
-    fan = fbData.boolData();
-  } 
-  else 
-  {
-    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-  }
+    path = fbPath + "/reverse";
+    if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
+    {
+      Serial.printf("Successfully read %s\n", path.c_str());
+      reverse = fbData.boolData();
+    } 
+    else 
+    {
+      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+    }
   
+  
+    path = fbPath + "/fan";
+    if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
+    {
+      Serial.printf("Successfully read %s\n", path.c_str());
+      fan = fbData.boolData();
+    } 
+    else 
+    {
+      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+    }
+
+    Serial.printf("%d, %d, %d\n",compressor, reverse, fan);
+  }
+    delay(5000);
 }

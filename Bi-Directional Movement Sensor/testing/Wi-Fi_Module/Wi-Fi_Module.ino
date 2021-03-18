@@ -38,7 +38,7 @@ void setup() {
 //  delay(2000);
 //  sendCommand("AT+CWMODE=1");
 //  sendCommand("AT+CWJAP=\"LinkedinPark\",\"mct052029\"");
-  sendCommand("AT+CIFSR");
+//  sendCommand("AT+CIFSR");
 }
 
 void loop() {
