@@ -20,6 +20,8 @@ struct token_info_t tokenInfo;
 String fbPath;
 const String PATH_START = "/devices/";
 const String PATH_END = "/data";
+const String KEY_RGB = "rgb";
+const String PATH_TIMESTAMP = "/timestamp";
 
 
 
@@ -38,7 +40,13 @@ void setup()
         delay(250); //Wait until connection successful
         Serial.print(".");
     }
+    
     Serial.print("\nSuccessfully connected to Wi-FI\n\n");
+    Serial.println("");
+    Serial.println("WiFi connected");  
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());  // make sure you have the IP addresss after WIFI is connected. 
+    
     
     // Set Firebase credentials
     fbConfig.host = FIREBASE_HOST;
@@ -72,15 +80,16 @@ void loop()
   else
   {
     String path;
-    bool red;
-    bool green;
-    bool blue;
+    int red;
+    int green;
+    int blue;
     
     path = fbPath + "/red";
-    if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
+    if (Firebase.RTDB.getInt(&fbData, path.c_str())) 
     {
-      Serial.printf("Successfully read %d\n", path.c_str());
-      red = fbData.boolData();
+      Serial.printf("Successfully read %s\n", path.c_str());
+      red = fbData.intData();
+      
     } 
     else 
     {
@@ -89,10 +98,10 @@ void loop()
    
   
     path = fbPath + "/green";
-    if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
+    if (Firebase.RTDB.getInt(&fbData, path.c_str())) 
     {
-      Serial.printf("Successfully read %d\n", path.c_str());
-      green = fbData.boolData();
+      Serial.printf("Successfully read %s\n", path.c_str());
+      green = fbData.intData();
     } 
     else 
     {
@@ -101,17 +110,17 @@ void loop()
   
   
     path = fbPath + "/blue";
-    if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
+    if (Firebase.RTDB.getInt(&fbData, path.c_str())) 
     {
-      Serial.printf("Successfully read %d\n", path.c_str());
-      blue = fbData.boolData();
+      Serial.printf("Successfully read %s\n", path.c_str());
+      blue = fbData.intData();
     } 
     else 
     {
       Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
     }
 
-    Serial.printf("%d, %d, %d\n",red, green, blue);
+    Serial.printf("%d,%d,%d\n",red, green, blue);
   }
     delay(5000);
 }
