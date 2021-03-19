@@ -20,8 +20,6 @@ struct token_info_t tokenInfo;
 String fbPath;
 const String PATH_START = "/devices/";
 const String PATH_END = "/data";
-const String KEY_HVAC = "thermostat";
-const String PATH_TIMESTAMP = "/timestamp";
 
 
 
