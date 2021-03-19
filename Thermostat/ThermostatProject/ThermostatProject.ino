@@ -1,5 +1,5 @@
 /*
- * Author: Jay Patel
+ * Author: Jay Patel & Rohan Mir
  * 
  * Target Device: Thermostat (HVAC Interface)
  * Target Board: ESP8266
@@ -20,10 +20,12 @@ struct token_info_t tokenInfo;
 String fbPath;
 const String PATH_START = "/devices/";
 const String PATH_END = "/data";
+const String KEY_HVAC = "thermostat";
+const String PATH_TIMESTAMP = "/timestamp";
 
 
 
-
+//GPIO0 Pin is to be unplugged after uploading
 void setup() 
 {
    // Turn on Serial so we can verify expected colors via Serial Monitor
