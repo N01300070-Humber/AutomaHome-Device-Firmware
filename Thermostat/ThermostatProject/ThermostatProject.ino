@@ -4,11 +4,14 @@
  * Target Device: Thermostat (HVAC Interface)
  * Target Board: ESP8266
  */
-
+ 
 #include <ESP8266WiFi.h>
 #include <Firebase_ESP_Client.h>
 #include "firebaseCredentials.h" //Contains FIREBASE_HOST, FIREBASE_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
 // firebaseCredentials.h temporarily contains WIFI_SSID and WIFI_PASSWORD
+
+// DHT object
+//DHT dht (PA1, DHT11);
 
 // Firebase Objects
 FirebaseData fbData;
@@ -20,6 +23,21 @@ struct token_info_t tokenInfo;
 String fbPath;
 const String PATH_START = "/devices/";
 const String PATH_END = "/data";
+const String PATH_TIMESTAMP = "/timestamp";
+const String PATH_TEMPERATURE = "/temperature";
+const String PATH_HUMIDITY = "/humidity";
+const String PATH_COMPRESSOR = "/compressor";
+const String PATH_FAN = "/fan";
+const String PATH_REVERSE = "/reverse";
+
+// Timing Variables
+unsigned long fbNextLoop = 0;
+#define FIREBASE_LOOP_INTERVAL 5000
+#define READ_TIMEOUT 250
+
+
+// Firebase Realtime Database Data
+String dataTest = "";
 
 
 
@@ -27,17 +45,21 @@ const String PATH_END = "/data";
 void setup() 
 {
    // Turn on Serial so we can verify expected colors via Serial Monitor
-   Serial.begin(115200);
+    Serial.begin(115200);
     delay(1000);
     
     // Connect to Wi-Fi
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    
     // Display connection status
     Serial.print("\nConnecting to Wi-Fi");
-    while (WiFi.status() != WL_CONNECTED) {
+    
+    while (WiFi.status() != WL_CONNECTED) 
+    {
         delay(250); //Wait until connection successful
         Serial.print(".");
     }
+    
     Serial.print("\nSuccessfully connected to Wi-FI\n\n");
     
     // Set Firebase credentials
@@ -61,6 +83,8 @@ void setup()
 }
 
 
+
+
 void loop() 
 {
   //Verify that you are connected to the Firebase
@@ -69,8 +93,108 @@ void loop()
   {
      Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
   }
-  else
+  else 
   {
+    getHVAC();
+    updateTempHumid();
+    updateTimeStamp();
+  }
+   
+}
+
+ String readInput(void) 
+{
+    unsigned long millisReadTimeout = millis() + READ_TIMEOUT;
+    char prevChar = 0;
+    char currChar = 0;
+    String message = "";
+
+    Serial.print("\nRecieved Message:\n");
+    while (millis() < millisReadTimeout) {
+        if (Serial.available() > 0) {
+            currChar = Serial.read();
+            
+//            Serial.printf("%c(%d), ", currChar, currChar);
+            if (!(currChar == '\n' || currChar == '\r')) {
+                Serial.print(currChar);
+                message += currChar;
+                millisReadTimeout = millis() + READ_TIMEOUT;
+            }
+            
+            if (currChar == '\n' && prevChar == '\r' || currChar == '\r' && prevChar == '\n') {
+                Serial.print("\nEnd of message: newline and return character terminated\n");
+                return message;
+            }
+            
+            prevChar = currChar;
+        }
+        else {
+            yield();
+        }
+    }
+
+    Serial.print("\nEnd of message: timed out waiting for new character\n");
+    return message;
+}
+
+   
+void updateTempHumid() 
+{
+    String path;
+    String t;
+    String h;
+    Serial.write('T');
+    Serial.write('U'); 
+    
+    /*String path;
+    String h = String(dht.readHumidity());
+    String t = String(dht.readTemperature());
+    Serial.printf("Temp: %s C, Humid: %s" ,h.c_str(), t.c_str()); // Print values to serial for verification purposes*/
+
+    path = fbPath + PATH_TEMPERATURE;
+    if (Firebase.RTDB.set(&fbData, path.c_str(), t.c_str())) 
+    {
+        Serial.printf("Successfully updated %s to %s\n", path.c_str(), t.c_str());
+    } 
+    else 
+    {
+        Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+    }
+
+   path = fbPath + PATH_HUMIDITY;
+    if (Firebase.RTDB.set(&fbData, path.c_str(), h.c_str()))
+    {
+        Serial.printf("Successfully updated %s to %s\n", path.c_str(), h.c_str());
+    } 
+    else 
+    {
+        Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+    }
+   
+}
+
+
+
+void updateTimeStamp(void) 
+{
+    String path;
+    path = fbPath + PATH_TIMESTAMP;
+    if (Firebase.RTDB.setTimestamp(&fbData, path.c_str())) 
+    {
+        Serial.printf("Successfully updated %s to current time\n", path.c_str());
+    }
+    else 
+    {
+        Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+    }
+
+    Serial.print("\n");
+}
+
+
+
+void getHVAC() 
+{
     String path;
     bool compressor;
     bool reverse;
@@ -112,6 +236,6 @@ void loop()
     }
 
     Serial.printf("%d, %d, %d\n",compressor, reverse, fan);
-  }
-    delay(5000);
+    
+    delay(5000);  
 }
