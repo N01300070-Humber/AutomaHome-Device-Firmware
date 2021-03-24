@@ -27,6 +27,8 @@ const String PATH_HUMIDITY = "/humidity";
 const String PATH_COMPRESSOR = "/compressor";
 const String PATH_FAN = "/fan";
 const String PATH_REVERSE = "/reverse";
+const String PATH_TARGET_TEMPERATURE = "/targetTemperature";
+const String PATH_TEMPERATURE_RANGE = "/temperatureRange";
 
 // Timing Variables
 unsigned long fbNextLoop = 0;
@@ -255,6 +257,8 @@ void getHVAC()
   bool compressor;
   bool reverse;
   bool fan;
+  float targetTemp;
+  float tempRange;
 
   path = fbPath + PATH_COMPRESSOR;
   if (Firebase.RTDB.getBool(&fbData, path.c_str()))
@@ -289,5 +293,27 @@ void getHVAC()
     Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
   }
 
-  Serial.printf("%d,%d,%d\n", compressor, reverse, fan);
+  path = fbPath + PATH_TARGET_TEMPERATURE;
+  if (Firebase.RTDB.getFloat(&fbData, path.c_str()))
+  {
+    Serial.printf("Successfully read %s\n", path.c_str());
+    targetTemp = fbData.floatData();
+  }
+  else
+  {
+    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+  }
+
+  path = fbPath + PATH_TEMPERATURE_RANGE;
+  if (Firebase.RTDB.getFloat(&fbData, path.c_str()))
+  {
+    Serial.printf("Successfully read %s\n", path.c_str());
+    fan = fbData.floatData();
+  }
+  else
+  {
+    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+  }
+
+  Serial.printf("%d,%d,%d,%.1f,%.1f\n", compressor, reverse, fan, targetTemp, tempRange);
 }
