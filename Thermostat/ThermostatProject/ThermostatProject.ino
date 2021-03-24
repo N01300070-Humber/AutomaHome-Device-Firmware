@@ -308,7 +308,7 @@ void getHVAC()
   if (Firebase.RTDB.getFloat(&fbData, path.c_str()))
   {
     Serial.printf("Successfully read %s\n", path.c_str());
-    fan = fbData.floatData();
+    tempRange = fbData.floatData();
   }
   else
   {
