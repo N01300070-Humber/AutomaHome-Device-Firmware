@@ -37,8 +37,6 @@ int messageResult = 0;
 String message = "";
 
 // Firebase Realtime Database Data
-//String dataTest = "";
-
 float temperature = 0.0;
 float humidity = 0.0;
 
@@ -85,8 +83,6 @@ void setup()
 }
 
 
-
-
 void loop()
 {
   if (Serial.available())
@@ -112,27 +108,18 @@ void loop()
     }
   }
 
-}
+  if (millis() >= fbNextLoop) {
+    fbNextLoop = millis() + FIREBASE_LOOP_INTERVAL;
 
-
-
-/*String getValue(String data, char separator, int index)
-  {
-    int found = 0;
-    int strIndex[] = { 0, -1 };
-    int maxIndex = data.length() - 1;
-
-    for (int i = 0; i <= maxIndex && found <= index; i++) {
-        if (data.charAt(i) == separator || i == maxIndex) {
-            found++;
-            strIndex[0] = strIndex[1] + 1;
-            strIndex[1] = (i == maxIndex) ? i+1 : i;
-        }
+    // Check staus of token used for connection
+    tokenInfo = Firebase.authTokenInfo();
+    if (tokenInfo.status == token_status_error) {
+      Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
+    } else {
+      getHVAC();
     }
-    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
-  }*/
-
-
+  }
+}
 
 
 int readIncomingMessage(void)
@@ -219,11 +206,6 @@ int readIncomingMessage(void)
   return -1; // code -1 = timed out waiting for new character
 }
 
-
-
-
-
-
 void updateTempHumid()
 {
   String path;
@@ -251,10 +233,6 @@ void updateTempHumid()
   updateTimeStamp();
 }
 
-
-
-
-
 void updateTimeStamp(void)
 {
   String path;
@@ -271,53 +249,45 @@ void updateTimeStamp(void)
   Serial.print("\n");
 }
 
+void getHVAC()
+{
+  String path;
+  bool compressor;
+  bool reverse;
+  bool fan;
 
-
-
-
-
-/*void getHVAC()
+  path = fbPath + PATH_COMPRESSOR;
+  if (Firebase.RTDB.getBool(&fbData, path.c_str()))
   {
-    String path;
-    bool compressor;
-    bool reverse;
-    bool fan;
+    Serial.printf("Successfully read %s\n", path.c_str());
+    compressor = fbData.boolData();
+  }
+  else
+  {
+    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+  }
 
-    path = fbPath + PATH_COMPRESSOR;
-    if (Firebase.RTDB.getBool(&fbData, path.c_str()))
-    {
-      Serial.printf("Successfully read %s\n", path.c_str());
-      compressor = fbData.boolData();
-    }
-    else
-    {
-      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-    }
+  path = fbPath + PATH_REVERSE;
+  if (Firebase.RTDB.getBool(&fbData, path.c_str()))
+  {
+    Serial.printf("Successfully read %s\n", path.c_str());
+    reverse = fbData.boolData();
+  }
+  else
+  {
+    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+  }
 
+  path = fbPath + PATH_FAN;
+  if (Firebase.RTDB.getBool(&fbData, path.c_str()))
+  {
+    Serial.printf("Successfully read %s\n", path.c_str());
+    fan = fbData.boolData();
+  }
+  else
+  {
+    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+  }
 
-    path = fbPath + PATH_REVERSE;
-    if (Firebase.RTDB.getBool(&fbData, path.c_str()))
-    {
-      Serial.printf("Successfully read %s\n", path.c_str());
-      reverse = fbData.boolData();
-    }
-    else
-    {
-      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-    }
-
-
-    path = fbPath + PATH_FAN;
-    if (Firebase.RTDB.getBool(&fbData, path.c_str()))
-    {
-      Serial.printf("Successfully read %s\n", path.c_str());
-      fan = fbData.boolData();
-    }
-    else
-    {
-      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-    }
-
-    Serial.printf("%d, %d, %d\n",compressor, reverse, fan);
-    delay(5000);
-  }*/
+  Serial.printf("%d,%d,%d\n", compressor, reverse, fan);
+}
