@@ -170,7 +170,7 @@ int readIncomingMessage(void)
       }
       else if (!notData)
       {
-        if (isDigit(currChar))
+        if (isDigit(currChar) || currChar == '.')
         {
           intString += currChar;
         }
