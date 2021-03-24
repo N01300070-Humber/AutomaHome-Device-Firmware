@@ -95,7 +95,9 @@ void loop()
 
     if (messageResult == -1) {
       Serial.println("Error reading message: timed out waiting for new character");
-    } else if (messageResult < -1) {
+    } else if (messageResult == -2) {
+      Serial.println("Error reading message: resulting message is empty");
+    } else if (messageResult < -2) {
       Serial.print("Error reading message: an unknown error occured with code ");
       Serial.println(messageResult);
     }
@@ -153,16 +155,14 @@ int readIncomingMessage(void)
         if (notData) 
         {
           return 0; // code 0 = finished reading log message
-        }
-
-        if (message.length() > 0) {
-          humidity = intString.toFloat();
-          Serial.print("Set humidity variable to ");
-          Serial.println(humidity);
-          return 1; // code 1 = finished reading and interpreting data message
-        } else {
+        } else if (message.length() > 0) {
           return -2; // code -2 = resulting message is empty
         }
+        
+        humidity = intString.toFloat();
+        Serial.print("Set humidity variable to ");
+        Serial.println(humidity);
+        return 1; // code 1 = finished reading and interpreting data message
       }
       
       else if (!notData) 
