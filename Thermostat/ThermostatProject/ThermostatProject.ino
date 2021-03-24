@@ -100,9 +100,10 @@ void loop()
     } else if (messageResult < -2) {
       Serial.print("Error reading message: an unknown error occured with code ");
       Serial.println(messageResult);
+    } else if (messageResult == 0) {
+      Serial.println("Error reading message: message is not data");
     }
 
-    Serial.println("Error reading message: Message is not data");
     Serial.println(message);
 
     if (messageResult == 1) {
@@ -155,7 +156,7 @@ int readIncomingMessage(void)
         if (notData) 
         {
           return 0; // code 0 = finished reading log message
-        } else if (message.length() > 0) {
+        } else if (message.length() <= 0) {
           return -2; // code -2 = resulting message is empty
         }
         
@@ -279,7 +280,7 @@ void updateTimeStamp(void)
 
 
 
-void getHVAC() 
+/*void getHVAC() 
 {
     String path;
     bool compressor;
@@ -323,4 +324,4 @@ void getHVAC()
 
     Serial.printf("%d, %d, %d\n",compressor, reverse, fan);
     delay(5000);  
-}
+}*/
