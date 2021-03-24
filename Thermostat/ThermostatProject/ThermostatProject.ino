@@ -156,8 +156,8 @@ int readIncomingMessage(void)
         }
         
         humidity = intString.toFloat();
-        //Serial.print("Set blue brightness variable to ");
-        //Serial.println(blueBright);
+        Serial.print("Set humidity variable to ");
+        Serial.println(humidity);
         return 1; // code 1 = finished reading and interpreting data message
       }
       
@@ -174,8 +174,8 @@ int readIncomingMessage(void)
           if(numCommas == 1) 
           {
             temperature = intString.toFloat();
-            //Serial.print("Set red brightness variable to ");
-            //Serial.println(redBright);      
+            Serial.print("Set temperature variable to ");
+            Serial.println(temperature);      
           } 
           
           else 
