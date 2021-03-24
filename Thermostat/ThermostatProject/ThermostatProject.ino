@@ -148,17 +148,21 @@ int readIncomingMessage(void)
     {
       currChar = Serial.read();
 
-      if (currChar == '\n' || currChar == '\r') 
+      if (currChar == '\n') 
       {
         if (notData) 
         {
           return 0; // code 0 = finished reading log message
         }
-        
-        humidity = intString.toFloat();
-        Serial.print("Set humidity variable to ");
-        Serial.println(humidity);
-        return 1; // code 1 = finished reading and interpreting data message
+
+        if (message.length() > 0) {
+          humidity = intString.toFloat();
+          Serial.print("Set humidity variable to ");
+          Serial.println(humidity);
+          return 1; // code 1 = finished reading and interpreting data message
+        } else {
+          return -2; // code -2 = resulting message is empty
+        }
       }
       
       else if (!notData) 
