@@ -227,33 +227,27 @@ int readIncomingMessage(void)
 void updateTempHumid()
 {
   String path;
-  String message;
 
-  if (Serial.available())
+  path = fbPath + PATH_TEMPERATURE;
+  if (Firebase.RTDB.set(&fbData, path.c_str(), temperature))
   {
-    message = readIncomingMessage();
-
-
-    path = fbPath + PATH_TEMPERATURE;
-    if (Firebase.RTDB.set(&fbData, path.c_str(), temperature))
-    {
-      Serial.printf("\nSuccessfully updated %s to %.1f\n", path.c_str(), temperature);
-    }
-    else
-    {
-      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-    }
-
-    path = fbPath + PATH_HUMIDITY;
-    if (Firebase.RTDB.set(&fbData, path.c_str(), humidity))
-    {
-      Serial.printf("\nSuccessfully updated %s to %.1f\n", path.c_str(), humidity);
-    }
-    else
-    {
-      Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
-    }
+    Serial.printf("\nSuccessfully updated %s to %.1f\n", path.c_str(), temperature);
   }
+  else
+  {
+    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+  }
+
+  path = fbPath + PATH_HUMIDITY;
+  if (Firebase.RTDB.set(&fbData, path.c_str(), humidity))
+  {
+    Serial.printf("\nSuccessfully updated %s to %.1f\n", path.c_str(), humidity);
+  }
+  else
+  {
+    Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
+  }
+
   updateTimeStamp();
 }
 
