@@ -10,8 +10,6 @@
 #include "firebaseCredentials.h" //Contains FIREBASE_HOST, FIREBASE_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
 // firebaseCredentials.h temporarily contains WIFI_SSID and WIFI_PASSWORD
 
-// DHT object
-//DHT dht (PA1, DHT11);
 
 // Firebase Objects
 FirebaseData fbData;
@@ -33,12 +31,16 @@ const String PATH_REVERSE = "/reverse";
 // Timing Variables
 unsigned long fbNextLoop = 0;
 #define FIREBASE_LOOP_INTERVAL 5000
-#define READ_TIMEOUT 250
+#define READ_TIMEOUT 2500
 
+int messageResult = 0;
+String message = "";
 
 // Firebase Realtime Database Data
-String dataTest = "";
+//String dataTest = "";
 
+float temperature = 0.0;
+float humidity = 0.0;
 
 
 //GPIO0 Pin is to be unplugged after uploading
@@ -87,74 +89,148 @@ void setup()
 
 void loop() 
 {
-  //Verify that you are connected to the Firebase
-  tokenInfo = Firebase.authTokenInfo();
-  if (tokenInfo.status == token_status_error) 
+  if (Serial.available()) 
   {
-     Serial.printf("Token Error: %s (%d)\n\n", tokenInfo.error.message.c_str(), tokenInfo.error.code);
-  }
-  else 
-  {
-    getHVAC();
-    updateTempHumid();
-    updateTimeStamp();
-  }
-   
-}
+    messageResult = readIncomingMessage();
 
- String readInput(void) 
-{
-    unsigned long millisReadTimeout = millis() + READ_TIMEOUT;
-    char prevChar = 0;
-    char currChar = 0;
-    String message = "";
-
-    Serial.print("\nRecieved Message:\n");
-    while (millis() < millisReadTimeout) {
-        if (Serial.available() > 0) {
-            currChar = Serial.read();
-            
-//            Serial.printf("%c(%d), ", currChar, currChar);
-            if (!(currChar == '\n' || currChar == '\r')) {
-                Serial.print(currChar);
-                message += currChar;
-                millisReadTimeout = millis() + READ_TIMEOUT;
-            }
-            
-            if (currChar == '\n' && prevChar == '\r' || currChar == '\r' && prevChar == '\n') {
-                Serial.print("\nEnd of message: newline and return character terminated\n");
-                return message;
-            }
-            
-            prevChar = currChar;
-        }
-        else {
-            yield();
-        }
+    if (messageResult == -1) {
+      Serial.println("Error reading message: timed out waiting for new character");
+    } else if (messageResult < -1) {
+      Serial.print("Error reading message: an unknown error occured with code ");
+      Serial.println(messageResult);
     }
 
-    Serial.print("\nEnd of message: timed out waiting for new character\n");
-    return message;
+    Serial.println("Error reading message: Message is not data");
+    Serial.println(message);
+
+    if (messageResult == 1) {
+      Serial.println("Setting Sensor Data");
+      updateTempHumid();
+    }
+  }
+   
 }
 
-   
+
+
+/*String getValue(String data, char separator, int index)
+{
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}*/
+
+
+
+
+int readIncomingMessage(void) 
+{
+  unsigned long millisReadTimeout = millis() + READ_TIMEOUT;
+  char currChar = 0;
+  String intString = "";
+  int numCommas = 0;
+  boolean notData = false;
+
+  message = "";
+
+  while (millis() < millisReadTimeout) 
+  {
+    if (Serial.available() > 0) 
+    {
+      currChar = Serial.read();
+
+      if (currChar == '\n' || currChar == '\r') 
+      {
+        if (notData) 
+        {
+          return 0; // code 0 = finished reading log message
+        }
+        
+        humidity = intString.toFloat();
+        //Serial.print("Set blue brightness variable to ");
+        //Serial.println(blueBright);
+        return 1; // code 1 = finished reading and interpreting data message
+      }
+      
+      else if (!notData) 
+      {
+        if (isDigit(currChar)) 
+        {
+          intString += currChar;
+        }
+        else if (currChar == ',') 
+        {
+          numCommas++;
+          
+          if(numCommas == 1) 
+          {
+            temperature = intString.toFloat();
+            //Serial.print("Set red brightness variable to ");
+            //Serial.println(redBright);      
+          } 
+          
+          else 
+          {
+            Serial.println("message is not data: too many commas");
+            notData = true;
+          }
+          
+          intString = "";
+        }
+        
+        else 
+        {
+          //Serial.print("message is not data: char '");
+          //Serial.print(currChar);
+          //Serial.print("' is not used in data\n");
+          notData = true;
+        }
+      }
+
+      if (currChar != '\r')
+      {
+      message += currChar;
+      millisReadTimeout = millis() + READ_TIMEOUT;
+      }
+    }
+    
+    else 
+    {
+      yield();
+    }
+  }
+
+  return -1; // code -1 = timed out waiting for new character
+}
+
+
+
+
+
+
 void updateTempHumid() 
 {
     String path;
-    String t;
-    String h;
-    Serial.write('T');
-    Serial.write('U'); 
-    
-    /*String path;
-    String h = String(dht.readHumidity());
-    String t = String(dht.readTemperature());
-    Serial.printf("Temp: %s C, Humid: %s" ,h.c_str(), t.c_str()); // Print values to serial for verification purposes*/
+    String message;
 
+  if(Serial.available()) 
+  {
+    message = readIncomingMessage();
+    
+    
     path = fbPath + PATH_TEMPERATURE;
-    if (Firebase.RTDB.set(&fbData, path.c_str(), t.c_str())) 
+    if (Firebase.RTDB.set(&fbData, path.c_str(), temperature)) 
     {
-        Serial.printf("Successfully updated %s to %s\n", path.c_str(), t.c_str());
+        Serial.printf("\nSuccessfully updated %s to %.1f\n", path.c_str(), temperature);
     } 
     else 
     {
@@ -162,16 +238,19 @@ void updateTempHumid()
     }
 
    path = fbPath + PATH_HUMIDITY;
-    if (Firebase.RTDB.set(&fbData, path.c_str(), h.c_str()))
+    if (Firebase.RTDB.set(&fbData, path.c_str(), humidity))
     {
-        Serial.printf("Successfully updated %s to %s\n", path.c_str(), h.c_str());
+        Serial.printf("\nSuccessfully updated %s to %.1f\n", path.c_str(), humidity);
     } 
     else 
     {
         Serial.printf("Failed to update %s: %s\n", path.c_str(), fbData.errorReason().c_str());
     }
-   
+  }
+    updateTimeStamp();
 }
+
+
 
 
 
@@ -193,6 +272,9 @@ void updateTimeStamp(void)
 
 
 
+
+
+
 void getHVAC() 
 {
     String path;
@@ -200,7 +282,7 @@ void getHVAC()
     bool reverse;
     bool fan;
     
-    path = fbPath + "/compressor";
+    path = fbPath + PATH_COMPRESSOR;
     if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
     {
       Serial.printf("Successfully read %s\n", path.c_str());
@@ -212,7 +294,7 @@ void getHVAC()
     }
    
   
-    path = fbPath + "/reverse";
+    path = fbPath + PATH_REVERSE;
     if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
     {
       Serial.printf("Successfully read %s\n", path.c_str());
@@ -224,7 +306,7 @@ void getHVAC()
     }
   
   
-    path = fbPath + "/fan";
+    path = fbPath + PATH_FAN;
     if (Firebase.RTDB.getBool(&fbData, path.c_str())) 
     {
       Serial.printf("Successfully read %s\n", path.c_str());
@@ -236,6 +318,5 @@ void getHVAC()
     }
 
     Serial.printf("%d, %d, %d\n",compressor, reverse, fan);
-    
     delay(5000);  
 }
