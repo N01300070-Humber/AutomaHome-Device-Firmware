@@ -76,6 +76,8 @@ void loop() {
 void updateTempAndHumid() {
   temperature = dht.readTemperature();
   humidity = dht.readHumidity();
+  Serial.println("Read temperature and humidity from sensor");
+  
   Serial2.print(temperature);
   Serial2.print(",");
   Serial2.print(humidity);
