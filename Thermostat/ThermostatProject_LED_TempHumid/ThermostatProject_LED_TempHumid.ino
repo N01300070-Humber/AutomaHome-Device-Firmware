@@ -30,6 +30,9 @@ bool compressor = false;  //Red LED
 bool reverse = false;     //Yellow LED
 bool fan = false;         //Green LED
 
+unsigned long sensorNextLoop = 0;
+#define SENSOR_LOOP_INTERVAL 5000
+
 
 void setup() {
 	// Set the LED pins to output
@@ -62,10 +65,15 @@ void loop() {
 			setHVAC();
 		}
 	}
+	if (millis() >= sensorNextLoop) {
+		sensorNextLoop = millis() + SENSOR_LOOP_INTERVAL;
+		
+		updateTempAndHumid();
+	}
 }
 
 
-void getTempAndHumid() {
+void updateTempAndHumid() {
 	temperature = dht.readTemperature();
 	humidity = dht.readHumidity();
 	Serial2.print(temperature);
