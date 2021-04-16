@@ -108,8 +108,8 @@ int readIncomingMessage(void) {
   message = "";
 
   while (millis() < millisReadTimeout) {
-    if (Serial.available() > 0) {
-      currChar = Serial.read();
+    if (Serial2.available() > 0) {
+      currChar = Serial2.read();
 
       if (currChar == '\n') {
         if (notData) {
