@@ -121,7 +121,7 @@ int readIncomingMessage(void) {
         }
 
         tempRange = intString.toFloat();
-        Serial.print("Set temperature range variable to ");
+        Serial.print("Read temperature range variable as ");
         Serial.println(tempRange);
         return 1; // code 1 = finished reading and interpreting data message
       } else if (!notData) {
@@ -138,8 +138,10 @@ int readIncomingMessage(void) {
             } else {
               notData = true;
             }
-            Serial.print("Set compressor variable to ");
-            Serial.println(compressor);
+            if (!notData) {
+              Serial.print("Read compressor variable as ");
+              Serial.println(compressor);
+            }
           } else if (numCommas = 2) {
             if (currChar == '0') {
               reverse = false;
@@ -148,8 +150,10 @@ int readIncomingMessage(void) {
             } else {
               notData = true;
             }
-            Serial.print("Set reverse variable to ");
-            Serial.println(reverse);
+            if (!notData) {
+              Serial.print("Read reverse variable as ");
+              Serial.println(reverse);
+            }
           } else if (numCommas = 3) {
             if (currChar == '0') {
               fan = false;
@@ -158,11 +162,13 @@ int readIncomingMessage(void) {
             } else {
               notData = true;
             }
-            Serial.print("Set fan variable to ");
-            Serial.println(fan);
+            if (!notData) {
+              Serial.print("Read fan variable as ");
+              Serial.println(fan);
+            }
           } else if (numCommas = 4) {
             targetTemp = intString.toFloat();
-            Serial.print("Set blue target temperature variable to ");
+            Serial.print("Read target temperature variable as ");
             Serial.println(targetTemp);
           } else {
             Serial.println("message is not data: too many commas");
