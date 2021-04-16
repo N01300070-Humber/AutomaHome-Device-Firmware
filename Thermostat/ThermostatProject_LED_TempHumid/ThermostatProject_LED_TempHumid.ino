@@ -52,7 +52,9 @@ void loop() {
 
     if (messageResult == -1) {
       Serial.println("Error reading message: timed out waiting for new character");
-    } else if (messageResult < -1) {
+    } else if (messageResult == -2) {
+      Serial.print("Error reading message: the read message is empty");
+    } else if (messageResult < -2) {
       Serial.print("Error reading message: an unknown error occurred with code ");
       Serial.println(messageResult);
     }
@@ -114,6 +116,8 @@ int readIncomingMessage(void) {
       if (currChar == '\n') {
         if (notData) {
           return 0; // code 0 = finished reading log message
+        } else if (message.length() < 1) {
+          return -2: // code -2 = message read is empty
         }
 
         tempRange = intString.toFloat();
