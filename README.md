@@ -19,4 +19,4 @@ This repository contains the source code for the 3 smart home devices created by
 
 **[Android App](https://github.com/N01300070-Humber/AutomaHome)** - The repository for the android app that goes along with this project
 
-***Smart Device Code* (Current)** - The repository for the 3 different smart home devices that were created for this project
+***Smart Device Code** (Current)* - The repository for the 3 different smart home devices that were created for this project
